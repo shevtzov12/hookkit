@@ -1,26 +1,128 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+/* Landing */
+.landing {
+  min-height: 100dvh;
+  background: #0c0e12;
+  color: #e8ecf4;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61, 214, 140, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61, 214, 140, 0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black, transparent);
+  pointer-events: none;
+}
+
+.landing-main {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 80px 24px 48px;
+}
+
+.landing-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.landing-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3dd68c 0%, #2aab6e 100%);
+  color: #0c0e12;
+  font-family: var(--font-mono), monospace;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 24px rgba(61, 214, 140, 0.25);
+}
+
+.landing-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.landing-title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+}
+
+.landing-lead {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #8b95a8;
+  margin-bottom: 28px;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 40px;
+}
+
+.landing-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.landing-btn-primary {
+  background: #3dd68c;
+  color: #0a0f0d;
+}
+
+.landing-btn-primary:hover {
+  background: #4ae09a;
+  box-shadow: 0 0 20px rgba(61, 214, 140, 0.25);
+}
+
+.landing-btn-ghost {
+  border: 1px solid #252a36;
+  color: #e8ecf4;
+}
+
+.landing-btn-ghost:hover {
+  background: #181c26;
+}
+
+.landing-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #8b95a8;
+  font-size: 14px;
+}
+
+.landing-features li::before {
+  content: "→ ";
+  color: #3dd68c;
 }
