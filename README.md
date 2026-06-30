@@ -23,9 +23,35 @@ npm run dev
 
 ## Project status
 
-**Phase 0 (current):** Dashboard UI ported from HTML preview with mock data.
+**Phase 3 (current):** Drizzle + Neon schema. Dual store (file / Postgres). Demo seed.
 
-**Next up:** Neon schema, auth, webhook catch route `/h/[id]`, form submit `/f/[id]`, API keys.
+## API (CP-1 + CP-2 + CP-3)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/h/{inboxId}` | Accept webhook (JSON or form, max 256 KB) |
+| `GET` | `/h/{inboxId}` | Inbox meta + curl example |
+| `GET` | `/api/inboxes/{inboxId}/events` | List events (`?limit=50&cursor=uuid`) |
+| `POST` | `/f/{formId}` | Accept form submit (JSON, form, multipart) |
+| `GET` | `/f/{formId}` | Form meta + example |
+| `GET` | `/api/forms/{formId}/submissions` | List submissions (`?includeSpam=1`) |
+| `GET` | `/api/v1/forms` | List forms (Neon) or file-mode hint |
+
+Demo inbox: `wh_demo_guest` · Demo form: `frm_demo_guest`
+
+## Database (Neon)
+
+```bash
+# .env.local
+DATABASE_URL=postgresql://...
+
+npm run db:push
+npm run db:seed
+```
+
+**Roadmap & checkpoints:** see [`STATE.md`](./STATE.md) — читай в новых чатах вместо полного контекста.
+
+**Next up:** Form submit `/f/[id]`, Neon schema, auth, API keys.
 
 ## Scripts
 
@@ -34,6 +60,9 @@ npm run dev
 | `npm run dev` | Dev server (Turbopack) |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
+| `npm test` | Vitest (40 tests: unit + security) |
+| `npm run db:push` | Apply Drizzle schema to Neon |
+| `npm run db:seed` | Seed guest demo inbox + form |
 
 ## Environment
 

@@ -1,5 +1,7 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+import { isClerkEnabled } from "@/lib/auth/config";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -24,9 +26,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const body = (
+    <body className="h-full antialiased">{children}</body>
+  );
+
   return (
     <html lang="en" className={`${instrumentSans.variable} ${ibmPlexMono.variable} h-full`}>
-      <body className="h-full antialiased">{children}</body>
+      {isClerkEnabled() ? <ClerkProvider>{body}</ClerkProvider> : body}
     </html>
   );
 }

@@ -35,6 +35,9 @@ export interface Submission {
   spam: boolean;
 }
 
+export const DEMO_INBOX_SLUG = "wh_demo_guest";
+export const DEMO_FORM_SLUG = "frm_demo_guest";
+
 export const INBOXES: Inbox[] = [
   {
     id: "stripe",
@@ -157,6 +160,13 @@ export const FORMS: FormItem[] = [
     subs: 14,
     active: false,
   },
+  {
+    id: "demo",
+    name: "Demo (live)",
+    endpoint: DEMO_FORM_SLUG,
+    subs: 0,
+    active: true,
+  },
 ];
 
 export const SUBMISSIONS: Submission[] = [
@@ -197,15 +207,17 @@ export const SUBMISSIONS: Submission[] = [
   },
 ];
 
-export const EMBED_SNIPPETS: Record<EmbedTab, string> = {
-  html: `<form action="https://hookkit.app/f/frm_contact_l9x4"
-      method="POST">
+export function getEmbedSnippets(
+  formUrl: string,
+): Record<EmbedTab, string> {
+  return {
+    html: `<form action="${formUrl}" method="POST">
   <input name="email" type="email" required />
   <input name="message" type="text" />
-  <input name="_gotcha" style="display:none" />
+  <input name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" />
   <button type="submit">Send</button>
 </form>`,
-  fetch: `await fetch('https://hookkit.app/f/frm_contact_l9x4', {
+    fetch: `await fetch('${formUrl}', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -213,15 +225,27 @@ export const EMBED_SNIPPETS: Record<EmbedTab, string> = {
     message: 'Hello!'
   })
 });`,
-  curl: `curl -X POST https://hookkit.app/f/frm_contact_l9x4 \\
+    curl: `curl -X POST ${formUrl} \\
   -H "Content-Type: application/json" \\
   -d '{"email":"user@example.com","message":"Hello!"}'`,
-};
+  };
+}
 
-export function getInboxUrl(publicId: string, baseUrl = "https://hookkit.app") {
+/** @deprecated use getEmbedSnippets(getFormUrl(...)) */
+export const EMBED_SNIPPETS: Record<EmbedTab, string> = getEmbedSnippets(
+  "https://hookkit.app/f/frm_contact_l9x4",
+);
+
+export function getInboxUrl(
+  publicId: string,
+  baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+) {
   return `${baseUrl}/h/${publicId}`;
 }
 
-export function getFormUrl(publicId: string, baseUrl = "https://hookkit.app") {
+export function getFormUrl(
+  publicId: string,
+  baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+) {
   return `${baseUrl}/f/${publicId}`;
 }
