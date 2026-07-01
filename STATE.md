@@ -154,8 +154,20 @@ npm test             # 59 tests
 
 ## Git
 
-- Ветка: `cursor/cp5-replay-ratelimit-turnstile-a16c` (CP-5…7 + dashboard fixes)
-- Base: `main` @ `293b95b`
+- `main` @ `a17d703` — CP-5…7 merged (PR #1)
+- Preview/prod: Vercel — подключить репо + env (см. ниже)
+
+### Vercel deploy (ручной шаг)
+
+1. [Import hookkit](https://vercel.com/new/import?s=https://github.com/shevtzov12/hookkit) → Framework Next.js, region fra1
+2. **Production env** (минимум для полного SaaS):
+   - `DATABASE_URL` — Neon
+   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
+   - `NEXT_PUBLIC_APP_URL` — `https://your-domain.vercel.app`
+3. **Optional:** `UPSTASH_REDIS_*`, `RESEND_*`, `TURNSTILE_*`
+4. Deploy → `npm run db:push` + `npm run db:seed` против Neon prod (один раз)
+
+> Без Neon+Clerk на Vercel file-store **не персистится** между invocations — только для preview smoke с ограничениями.
 
 ## Google Tasks (OtomOsem TV's list)
 
