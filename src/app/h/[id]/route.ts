@@ -1,4 +1,7 @@
 import { debugLog } from "@/lib/debug-log";
+import { isInboxPaused } from "@/lib/inboxes/status";
+import { checkWebhookRateLimit, retryAfterSeconds } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request/client-ip";
 import { appendWebhookEvent } from "@/lib/store/events";
 import { PUBLIC_ID_PATTERN } from "@/lib/webhooks/constants";
 import { inferEventType, pickHeaders, pickQuery, readWebhookBody } from "@/lib/webhooks/parse-request";
@@ -51,9 +54,7 @@ async function handleWebhook(
   { id }: { id: string },
 ) {
   if (!PUBLIC_ID_PATTERN.test(id)) {
-    // #region agent log
     debugLog("h/[id]/route.ts:handleWebhook", "invalid inbox id", { id }, "H3");
-    // #endregion
     return Response.json({ ok: false, error: "invalid inbox id" }, { status: 400 });
   }
 
@@ -61,16 +62,30 @@ async function handleWebhook(
     return Response.json({ ok: false, error: "method not allowed" }, { status: 405 });
   }
 
+  if (await isInboxPaused(id)) {
+    return Response.json({ ok: false, error: "inbox paused" }, { status: 503 });
+  }
+
+  const clientIp = getClientIp(request);
+  const rateLimit = await checkWebhookRateLimit(id, clientIp);
+  if (!rateLimit.success) {
+    return Response.json(
+      { ok: false, error: "rate limit exceeded" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(retryAfterSeconds(rateLimit.reset)) },
+      },
+    );
+  }
+
   const parsed = await readWebhookBody(request);
   if (!parsed.ok) {
-    // #region agent log
     debugLog(
       "h/[id]/route.ts:handleWebhook",
       "body rejected",
       { id, status: parsed.status, error: parsed.error },
       "H4",
     );
-    // #endregion
     return Response.json({ ok: false, error: parsed.error }, { status: parsed.status });
   }
 
@@ -82,14 +97,12 @@ async function handleWebhook(
     body: parsed.body,
   });
 
-  // #region agent log
   debugLog(
     "h/[id]/route.ts:handleWebhook",
     "webhook stored",
     { id, eventId: record.id, type: inferEventType(parsed.body) },
     "H1",
   );
-  // #endregion
 
   return Response.json(
     {

@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -42,6 +43,7 @@ export const inboxes = pgTable(
     publicId: text("public_id").notNull().unique(),
     name: text("name").notNull(),
     paused: boolean("paused").notNull().default(false),
+    replayUrl: text("replay_url"),
     isGuest: boolean("is_guest").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -99,6 +101,28 @@ export const submissions = pgTable(
   ],
 );
 
+export const replays = pgTable(
+  "replays",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    inboxId: uuid("inbox_id")
+      .notNull()
+      .references(() => inboxes.id, { onDelete: "cascade" }),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    targetUrl: text("target_url").notNull(),
+    statusCode: integer("status_code"),
+    durationMs: integer("duration_ms").notNull().default(0),
+    error: text("error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("replays_inbox_id_created_at_idx").on(table.inboxId, table.createdAt),
+    index("replays_event_id_idx").on(table.eventId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   apiKeys: many(apiKeys),
   inboxes: many(inboxes),
@@ -107,6 +131,7 @@ export const usersRelations = relations(users, ({ many }) => ({
 
 export const inboxesRelations = relations(inboxes, ({ many }) => ({
   events: many(events),
+  replays: many(replays),
 }));
 
 export const formsRelations = relations(forms, ({ many }) => ({
@@ -118,3 +143,4 @@ export type Inbox = typeof inboxes.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type Form = typeof forms.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
+export type Replay = typeof replays.$inferSelect;

@@ -5,6 +5,9 @@ import {
 } from "@/lib/auth/config";
 import { verifyApiKey } from "@/lib/auth/api-keys";
 import { requireResourceOwnership } from "@/lib/auth/resource-ownership";
+import { isDatabaseEnabled } from "@/lib/db/client";
+import { isFileStoreForm } from "@/lib/store/forms-registry";
+import { isFileStoreInbox } from "@/lib/store/inboxes-registry";
 
 export type AccessResult =
   | { ok: true; userId?: string; via: "guest" | "clerk" | "api-key" }
@@ -24,6 +27,16 @@ export async function requireReadAccess(
 ): Promise<AccessResult> {
   if (isGuestResourcePublicId(publicId, type)) {
     return { ok: true, via: "guest" };
+  }
+
+  if (!isDatabaseEnabled() && !isClerkEnabled()) {
+    const known =
+      type === "inbox"
+        ? await isFileStoreInbox(publicId)
+        : await isFileStoreForm(publicId);
+    if (known) {
+      return { ok: true, via: "guest" };
+    }
   }
 
   const bearer = request.headers.get("authorization");

@@ -7,6 +7,8 @@ let testDataDir: string | null = null;
 
 beforeEach(() => {
   delete process.env.DATABASE_URL;
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
   testDataDir = path.join(
     os.tmpdir(),
     `hookkit-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,

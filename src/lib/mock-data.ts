@@ -1,4 +1,4 @@
-export type DashboardView = "webhooks" | "forms" | "apikeys";
+export type DashboardView = "webhooks" | "forms" | "apikeys" | "settings";
 
 export type EmbedTab = "html" | "fetch" | "curl";
 
@@ -12,6 +12,7 @@ export interface Inbox {
 
 export interface WebhookEvent {
   id: number;
+  recordId?: string;
   method: string;
   type: string;
   time: string;
@@ -209,13 +210,20 @@ export const SUBMISSIONS: Submission[] = [
 
 export function getEmbedSnippets(
   formUrl: string,
+  turnstileSiteKey?: string | null,
 ): Record<EmbedTab, string> {
+  const turnstileBlock = turnstileSiteKey
+    ? `  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <div class="cf-turnstile" data-sitekey="${turnstileSiteKey}"></div>
+`
+    : "";
+
   return {
     html: `<form action="${formUrl}" method="POST">
   <input name="email" type="email" required />
   <input name="message" type="text" />
   <input name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" />
-  <button type="submit">Send</button>
+${turnstileBlock}  <button type="submit">Send</button>
 </form>`,
     fetch: `await fetch('${formUrl}', {
   method: 'POST',

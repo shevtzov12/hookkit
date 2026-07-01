@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendWebhookEvent, listInboxEvents } from "@/lib/store/events";
+import { appendWebhookEvent, getInboxEventStats, listInboxEvents } from "@/lib/store/events";
 import { PUBLIC_ID_PATTERN } from "@/lib/webhooks/constants";
 
 describe("store/events pagination", () => {
@@ -30,6 +30,39 @@ describe("store/events pagination", () => {
     expect(page2.events).toHaveLength(2);
     expect(page2.events[0].id).not.toBe(page1.events[0].id);
     expect(page2.events[0].id).not.toBe(page1.events[1].id);
+  });
+});
+
+describe("store/events stats", () => {
+  it("returns newest event per inbox when events are interleaved", async () => {
+    const inboxA = "wh_stats_a";
+    const inboxB = "wh_stats_b";
+
+    await appendWebhookEvent({
+      inboxId: inboxA,
+      method: "POST",
+      headers: {},
+      query: {},
+      body: { n: 1 },
+    });
+    await appendWebhookEvent({
+      inboxId: inboxB,
+      method: "POST",
+      headers: {},
+      query: {},
+      body: { n: 2 },
+    });
+    const latestA = await appendWebhookEvent({
+      inboxId: inboxA,
+      method: "POST",
+      headers: {},
+      query: {},
+      body: { type: "latest.a" },
+    });
+
+    const stats = await getInboxEventStats(inboxA);
+    expect(stats.lastEvent?.id).toBe(latestA.id);
+    expect(stats.total).toBe(2);
   });
 });
 

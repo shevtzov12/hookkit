@@ -3,6 +3,8 @@ import path from "node:path";
 import { isDatabaseEnabled } from "@/lib/db/client";
 import {
   appendWebhookEventDb,
+  getInboxEventByIdDb,
+  getInboxEventStatsDb,
   listInboxEventsDb,
 } from "@/lib/db/repositories/events";
 import { MAX_EVENTS_PER_INBOX } from "@/lib/webhooks/constants";
@@ -83,7 +85,9 @@ export async function listInboxEvents(
 
   const limit = options.limit ?? 50;
   const store = await ensureStore();
-  const all = store.events.filter((e) => e.inboxId === inboxId);
+  const all = store.events
+    .filter((e) => e.inboxId === inboxId)
+    .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
 
   let slice = all;
   if (options.cursor) {
@@ -109,4 +113,47 @@ export async function countInboxEvents(inboxId: string): Promise<number> {
   }
   const store = await ensureStore();
   return store.events.filter((e) => e.inboxId === inboxId).length;
+}
+
+export async function getInboxEventById(
+  inboxId: string,
+  eventId: string,
+): Promise<WebhookEventRecord | null> {
+  if (isDatabaseEnabled()) {
+    return getInboxEventByIdDb(inboxId, eventId);
+  }
+
+  const store = await ensureStore();
+  const record = store.events.find((e) => e.inboxId === inboxId && e.id === eventId);
+  return record ?? null;
+}
+
+function startOfUtcDay(iso = new Date()): string {
+  const d = new Date(iso);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+export interface InboxEventStats {
+  total: number;
+  today: number;
+  lastEvent: WebhookEventRecord | null;
+}
+
+export async function getInboxEventStats(inboxId: string): Promise<InboxEventStats> {
+  if (isDatabaseEnabled()) {
+    return getInboxEventStatsDb(inboxId);
+  }
+
+  const store = await ensureStore();
+  const all = store.events
+    .filter((e) => e.inboxId === inboxId)
+    .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+  const todayStart = startOfUtcDay();
+  const today = all.filter((e) => e.receivedAt >= todayStart).length;
+  return {
+    total: all.length,
+    today,
+    lastEvent: all[0] ?? null,
+  };
 }

@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { HONEYPOT_FIELD, MAX_WEBHOOK_BODY_BYTES } from "@/lib/webhooks/constants";
+import { TURNSTILE_RESPONSE_FIELD } from "@/lib/turnstile/config";
 
 export type FormBodyReadResult =
   | { ok: true; fields: Record<string, string> }
@@ -28,6 +29,7 @@ export function pickRedirectUrl(
 export function stripInternalFields(fields: Record<string, string>): Record<string, string> {
   const result = { ...fields };
   delete result[HONEYPOT_FIELD];
+  delete result[TURNSTILE_RESPONSE_FIELD];
   for (const key of REDIRECT_FIELDS) {
     delete result[key];
   }
