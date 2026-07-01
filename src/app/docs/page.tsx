@@ -8,8 +8,8 @@ export default function DocsPage() {
       <div className="landing-grid" aria-hidden />
       <main className="landing-main docs-main">
         <div className="landing-logo">
-          <Link href="/" className="landing-name" style={{ textDecoration: "none" }}>
-            ← HookKit
+          <Link href="/dashboard" className="landing-name" style={{ textDecoration: "none" }}>
+            ← Dashboard
           </Link>
         </div>
         <h1 className="landing-title" style={{ fontSize: "2rem" }}>
@@ -66,15 +66,6 @@ GET  /api/v1/forms
 GET  /api/v1/api-keys
 POST /api/v1/inboxes`}</pre>
         </section>
-
-        <div className="landing-actions">
-          <Link href="/dashboard" className="landing-btn landing-btn-primary">
-            Open dashboard
-          </Link>
-          <Link href="/" className="landing-btn landing-btn-ghost">
-            Home
-          </Link>
-        </div>
       </main>
     </div>
   );

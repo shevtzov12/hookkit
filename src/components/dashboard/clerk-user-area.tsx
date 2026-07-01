@@ -14,13 +14,15 @@ export function ClerkUserArea() {
       .toUpperCase() || "HK";
 
   return (
-    <div className="user-chip">
+    <div className="user-chip user-chip--clerk">
       <div className="avatar">{initials}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <div className="user-chip-label">
         <div className="user-name">{name}</div>
         <div className="user-plan">Signed in</div>
       </div>
-      <UserButton />
+      <div className="user-chip-menu">
+        <UserButton />
+      </div>
     </div>
   );
 }

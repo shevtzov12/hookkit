@@ -70,7 +70,13 @@ const DEFAULT_FORMS: FormItem[] = [
   },
 ];
 
-export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean }) {
+export function DashboardApp({
+  clerkEnabled = false,
+  apiKeysEnabled = false,
+}: {
+  clerkEnabled?: boolean;
+  apiKeysEnabled?: boolean;
+}) {
   const [view, setView] = useState<DashboardView>("webhooks");
   const [inboxList, setInboxList] = useState<Inbox[]>(DEFAULT_INBOXES);
   const [formList, setFormList] = useState<FormItem[]>(DEFAULT_FORMS);
@@ -271,7 +277,7 @@ export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean 
   }, [activeFormSlug]);
 
   const refreshApiKeys = useCallback(async () => {
-    if (!clerkEnabled) return;
+    if (!apiKeysEnabled) return;
     setApiKeysLoading(true);
     setApiKeysError(null);
     try {
@@ -297,7 +303,7 @@ export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean 
     } finally {
       setApiKeysLoading(false);
     }
-  }, [clerkEnabled]);
+  }, [apiKeysEnabled]);
 
   const refreshInboxList = useCallback(async () => {
     const res = await fetch("/api/v1/inboxes");
@@ -613,7 +619,7 @@ export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean 
   }
 
   async function createApiKey() {
-    if (!clerkEnabled) return;
+    if (!apiKeysEnabled) return;
     setCreatingKey(true);
     setApiKeysError(null);
     try {
@@ -808,13 +814,17 @@ export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean 
             {clerkEnabled ? (
               <ClerkUserArea />
             ) : (
-              <div className="user-chip">
-                <div className="avatar">AK</div>
+              <button
+                type="button"
+                className="user-chip"
+                onClick={() => setView("settings")}
+              >
+                <div className="avatar">G</div>
                 <div>
                   <div className="user-name">Guest</div>
-                  <div className="user-plan">Clerk not configured</div>
+                  <div className="user-plan">Local · file store</div>
                 </div>
-              </div>
+              </button>
             )}
           </div>
         </aside>
@@ -1336,7 +1346,7 @@ export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean 
                 <button
                   type="button"
                   className="btn btn-primary"
-                  disabled={!clerkEnabled || creatingKey}
+                  disabled={!apiKeysEnabled || creatingKey}
                   onClick={() => void createApiKey()}
                 >
                   {creatingKey ? "Creating…" : "+ Create key"}
@@ -1345,17 +1355,6 @@ export function DashboardApp({ clerkEnabled = false }: { clerkEnabled?: boolean 
             </header>
 
             <div className="content content--scroll">
-              {!clerkEnabled ? (
-                <div className="panel hookkit-panel-max">
-                  <div className="panel-body">
-                    <p style={{ color: "var(--text-dim)", margin: 0 }}>
-                      Set <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code> and{" "}
-                      <code>CLERK_SECRET_KEY</code> in <code>.env.local</code> to manage API keys.
-                    </p>
-                  </div>
-                </div>
-              ) : null}
-
               {createdSecret ? (
                 <div className="panel hookkit-panel-max" style={{ marginBottom: 16 }}>
                   <div className="panel-header">

@@ -174,5 +174,6 @@ npm test             # 59 tests
 
 - [x] Export CSV, Resend, /docs, landing polish, Vercel config (CP-6)
 - [x] Usage API, live stats, bench script (CP-7)
+- [x] Dashboard live wiring + button fixes + local API keys UX
 
-Открыто: Termly embed, Vercel deploy (manual), non-demo dashboard wiring, Forms CRUD POST.
+Открыто: Termly embed, Vercel deploy (manual), file-store ownership на production.
