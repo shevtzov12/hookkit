@@ -14,11 +14,14 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "bench:rate-limit": "tsx scripts/bench-rate-limit.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.10",
     "@neondatabase/serverless": "^1.1.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.9",
     "react": "19.2.4",

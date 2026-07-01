@@ -2,9 +2,14 @@ import { auth } from "@clerk/nextjs/server";
 import {
   isClerkEnabled,
   isGuestResourcePublicId,
+  isLocalFileDevMode,
+  LOCAL_DEV_USER_ID,
 } from "@/lib/auth/config";
 import { verifyApiKey } from "@/lib/auth/api-keys";
 import { requireResourceOwnership } from "@/lib/auth/resource-ownership";
+import { isDatabaseEnabled } from "@/lib/db/client";
+import { isFileStoreForm } from "@/lib/store/forms-registry";
+import { isFileStoreInbox } from "@/lib/store/inboxes-registry";
 
 export type AccessResult =
   | { ok: true; userId?: string; via: "guest" | "clerk" | "api-key" }
@@ -24,6 +29,16 @@ export async function requireReadAccess(
 ): Promise<AccessResult> {
   if (isGuestResourcePublicId(publicId, type)) {
     return { ok: true, via: "guest" };
+  }
+
+  if (!isDatabaseEnabled() && !isClerkEnabled()) {
+    const known =
+      type === "inbox"
+        ? await isFileStoreInbox(publicId)
+        : await isFileStoreForm(publicId);
+    if (known) {
+      return { ok: true, via: "guest" };
+    }
   }
 
   const bearer = request.headers.get("authorization");
@@ -70,6 +85,10 @@ export async function requireV1Access(request: Request): Promise<AccessResult> {
       return { ok: true, userId, via: "clerk" };
     }
     return unauthorized();
+  }
+
+  if (isLocalFileDevMode()) {
+    return { ok: true, userId: LOCAL_DEV_USER_ID, via: "guest" };
   }
 
   return unauthorized("clerk or api key required");

@@ -11,7 +11,7 @@ Webhook Inbox + Form Backend для статики. API-first, без AI.
 - Next.js 16 App Router, React 19, Tailwind 4, Node 22
 - **Persistence:** file store (`.data/`) по умолчанию; **Neon Postgres** при `DATABASE_URL`
 - **ORM:** Drizzle
-- **Потом:** Upstash rate limits
+- **Rate limits:** Upstash Redis (optional env)
 
 ## Карта роутов
 
@@ -27,7 +27,15 @@ Webhook Inbox + Form Backend для статики. API-first, без AI.
 | `/api/v1/forms` | done | GET forms list (auth / API key) |
 | `/api/v1/api-keys` | done | GET/POST API keys |
 | `/api/v1/api-keys/[id]` | done | DELETE revoke key |
+| `/api/inboxes/[id]/replay` | done | GET/POST replay URL + stats |
+| `/api/inboxes/[id]/events/[eventId]/replay` | done | POST replay event |
+| `/api/forms/[id]/settings` | done | GET/POST form settings (Turnstile) |
+| `/api/forms/[id]/submissions/export` | done | GET CSV export |
+| `/docs` | done | API reference |
 | `/api/v1/inboxes` | done | GET/POST inboxes (Neon + Clerk) |
+| `/api/inboxes/[id]/stats` | done | GET inbox stats + rate usage |
+| `/api/forms/[id]/usage` | done | GET form rate usage |
+| `/privacy`, `/terms` | done | Legal placeholders (Termly later) |
 
 ## Структура кода
 
@@ -103,7 +111,34 @@ npm run dev
 - `GET/POST /api/v1/inboxes` (Neon + Clerk)
 - Dashboard: live API keys tab, UserButton при Clerk
 
-### CP-5 — Replay, rate limits, Turnstile (next)
+### CP-5 — Replay, rate limits, Turnstile ✅
+
+- Upstash rate limits on `POST /h/[id]` and `POST /f/[id]` (429 + Retry-After; no-op without env)
+- Turnstile verify when `forms.settings.turnstileEnabled` + env keys; fail → `spam: true`
+- Replay API with SSRF protection; `replays` audit + dashboard wiring
+- Migration: `drizzle/0001_cp5.sql` (`inboxes.replay_url`, `replays` table)
+- **52 vitest tests**
+
+### CP-6 — Export CSV, Resend, docs, deploy prep ✅
+
+- `GET /api/forms/[id]/submissions/export` — CSV download (auth / guest demo)
+- Resend email notify when `forms.settings.emailNotify` + `notifyEmail`
+- `/docs`, `/privacy`, `/terms` pages
+- Landing polish + footer links
+- `vercel.json` (region fra1)
+
+### CP-7 — Usage API, live stats, bench ✅
+
+- `GET /api/inboxes/[id]/stats` — events today, last event, rate limit usage
+- `GET /api/forms/[id]/usage` — form rate limit usage
+- Dashboard: live webhook stats, live rate limits panel, Docs link
+- `npm run bench:rate-limit` — load test script
+
+### CP-8 — (next)
+
+Termly embed, Vercel deploy (manual), file-store multi-tenant ownership hardening.
+
+Dashboard live wiring (create inbox/form, settings view, webhook toggle) — done locally.
 
 ## Локальная разработка
 
@@ -112,13 +147,15 @@ nvm use
 npm install
 cp .env.example .env.local
 npm run dev
-npm test             # 43+ tests
+npm test             # 59 tests
 ```
+
+> **File-store без Clerk** — только для локальной разработки. На production нужны Neon + Clerk.
 
 ## Git
 
-- Ветка: `main`
-- CP-1…CP-4 локально, не закоммичено
+- Ветка: `cursor/cp5-replay-ratelimit-turnstile-a16c` (CP-5…7 + dashboard fixes)
+- Base: `main` @ `293b95b`
 
 ## Google Tasks (OtomOsem TV's list)
 
@@ -133,4 +170,10 @@ npm test             # 43+ tests
 - [x] Auth (Clerk) + API keys backend
 - [x] Inboxes CRUD (POST/GET /api/v1/inboxes)
 
-Открыто: Replay, Rate limits, Turnstile, Resend, Vercel, Termly, /docs, лендинг polish, Export CSV.
+- [x] Replay, Rate limits, Turnstile (CP-5)
+
+- [x] Export CSV, Resend, /docs, landing polish, Vercel config (CP-6)
+- [x] Usage API, live stats, bench script (CP-7)
+- [x] Dashboard live wiring + button fixes + local API keys UX
+
+Открыто: Termly embed, Vercel deploy (manual), file-store ownership на production.

@@ -16,21 +16,28 @@ export default function HomePage() {
         </h1>
         <p className="landing-lead">
           Catch webhook payloads, replay to your API, and accept form submissions from static
-          sites — API-first, with keys and rate limits.
+          sites — API-first, with keys, rate limits, and Turnstile spam protection.
         </p>
         <div className="landing-actions">
           <Link href="/dashboard" className="landing-btn landing-btn-primary">
             Open dashboard
           </Link>
-          <a href="#features" className="landing-btn landing-btn-ghost">
-            Features
-          </a>
+          <Link href="/docs" className="landing-btn landing-btn-ghost">
+            API docs
+          </Link>
         </div>
         <ul id="features" className="landing-features">
-          <li>Webhook Inbox with replay</li>
-          <li>Form backend for static landings</li>
-          <li>API keys &amp; rate limits</li>
+          <li>Webhook Inbox with replay &amp; SSRF-safe forwarding</li>
+          <li>Form backend — honeypot, Turnstile, CSV export</li>
+          <li>API keys, Clerk auth, Upstash rate limits</li>
+          <li>Email notifications via Resend (optional)</li>
         </ul>
+        <footer className="landing-footer">
+          <Link href="/docs">Docs</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
+          <span>HookKit · static-first backend</span>
+        </footer>
       </main>
     </div>
   );

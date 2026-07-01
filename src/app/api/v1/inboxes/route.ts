@@ -1,9 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-import { getDb, isDatabaseEnabled } from "@/lib/db/client";
-import { inboxes, users } from "@/lib/db/schema";
 import { isClerkEnabled } from "@/lib/auth/config";
 import { requireV1Access } from "@/lib/auth/require-access";
+import { getDb, isDatabaseEnabled } from "@/lib/db/client";
+import { inboxes, users } from "@/lib/db/schema";
+import { DEMO_INBOX_SLUG } from "@/lib/mock-data";
+import {
+  createUserInboxFile,
+  listUserInboxesFile,
+} from "@/lib/store/inboxes-registry";
 import { PUBLIC_ID_PATTERN } from "@/lib/webhooks/constants";
 
 export const dynamic = "force-dynamic";
@@ -18,17 +23,42 @@ function slugify(name: string): string {
   return `wh_${base || "inbox"}_${suffix}`;
 }
 
+async function listFileInboxes() {
+  const userInboxes = await listUserInboxesFile();
+  return Response.json({
+    ok: true,
+    storage: "file",
+    inboxes: [
+      {
+        id: "demo",
+        publicId: DEMO_INBOX_SLUG,
+        name: "Demo (read-only)",
+        paused: false,
+        isGuest: true,
+        createdAt: null,
+      },
+      ...userInboxes.map((row) => ({
+        id: row.id,
+        publicId: row.publicId,
+        name: row.name,
+        paused: false,
+        isGuest: false,
+        createdAt: row.createdAt,
+      })),
+    ],
+  });
+}
+
 export async function GET(request: Request) {
+  if (!isDatabaseEnabled() && !isClerkEnabled()) {
+    return listFileInboxes();
+  }
+
   const access = await requireV1Access(request);
   if (!access.ok) return access.response;
 
   if (!isDatabaseEnabled()) {
-    return Response.json({
-      ok: true,
-      storage: "file",
-      inboxes: [],
-      hint: "Set DATABASE_URL for inbox CRUD.",
-    });
+    return listFileInboxes();
   }
 
   const db = getDb();
@@ -59,6 +89,31 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const body = (await request.json()) as { name?: string };
+  const name = body.name?.trim();
+  if (!name) {
+    return Response.json({ ok: false, error: "name required" }, { status: 400 });
+  }
+
+  if (!isDatabaseEnabled()) {
+    if (isClerkEnabled()) {
+      const access = await requireV1Access(request);
+      if (!access.ok) return access.response;
+    }
+
+    const row = await createUserInboxFile(name);
+    return Response.json({
+      ok: true,
+      storage: "file",
+      inbox: {
+        id: row.id,
+        publicId: row.publicId,
+        name: row.name,
+        url: `/h/${row.publicId}`,
+      },
+    });
+  }
+
   if (!isClerkEnabled()) {
     return Response.json({ ok: false, error: "clerk not configured" }, { status: 503 });
   }
@@ -66,19 +121,6 @@ export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
     return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
-  }
-
-  if (!isDatabaseEnabled()) {
-    return Response.json(
-      { ok: false, error: "DATABASE_URL required for inbox CRUD" },
-      { status: 503 },
-    );
-  }
-
-  const body = (await request.json()) as { name?: string };
-  const name = body.name?.trim();
-  if (!name) {
-    return Response.json({ ok: false, error: "name required" }, { status: 400 });
   }
 
   const publicId = slugify(name);

@@ -1,4 +1,4 @@
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, gte, lt } from "drizzle-orm";
 import type { ListInboxEventsOptions, ListInboxEventsResult } from "@/lib/store/events";
 import type { WebhookEventRecord } from "@/lib/store/types";
 import { getDb } from "@/lib/db/client";
@@ -78,6 +78,89 @@ export async function appendWebhookEventDb(
     query: record.query as Record<string, string>,
     body: record.body,
     receivedAt: record.receivedAt.toISOString(),
+  };
+}
+
+export async function getInboxEventByIdDb(
+  inboxPublicId: string,
+  eventId: string,
+): Promise<WebhookEventRecord | null> {
+  const db = getDb();
+  const [inbox] = await db
+    .select({ id: inboxes.id })
+    .from(inboxes)
+    .where(eq(inboxes.publicId, inboxPublicId))
+    .limit(1);
+
+  if (!inbox) return null;
+
+  const [row] = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.id, eventId), eq(events.inboxId, inbox.id)))
+    .limit(1);
+
+  if (!row) return null;
+
+  return {
+    id: row.id,
+    inboxId: inboxPublicId,
+    method: row.method,
+    headers: row.headers as Record<string, string>,
+    query: row.query as Record<string, string>,
+    body: row.body,
+    receivedAt: row.receivedAt.toISOString(),
+  };
+}
+
+export async function getInboxEventStatsDb(
+  inboxPublicId: string,
+): Promise<import("@/lib/store/events").InboxEventStats> {
+  const db = getDb();
+  const [inbox] = await db
+    .select({ id: inboxes.id })
+    .from(inboxes)
+    .where(eq(inboxes.publicId, inboxPublicId))
+    .limit(1);
+
+  if (!inbox) {
+    return { total: 0, today: 0, lastEvent: null };
+  }
+
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+
+  const allRows = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(eq(events.inboxId, inbox.id));
+
+  const todayRows = await db
+    .select({ id: events.id })
+    .from(events)
+    .where(and(eq(events.inboxId, inbox.id), gte(events.receivedAt, todayStart)));
+
+  const [lastRow] = await db
+    .select()
+    .from(events)
+    .where(eq(events.inboxId, inbox.id))
+    .orderBy(desc(events.receivedAt))
+    .limit(1);
+
+  return {
+    total: allRows.length,
+    today: todayRows.length,
+    lastEvent: lastRow
+      ? {
+          id: lastRow.id,
+          inboxId: inboxPublicId,
+          method: lastRow.method,
+          headers: lastRow.headers as Record<string, string>,
+          query: lastRow.query as Record<string, string>,
+          body: lastRow.body,
+          receivedAt: lastRow.receivedAt.toISOString(),
+        }
+      : null,
   };
 }
 

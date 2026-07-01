@@ -1,6 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { revokeApiKey } from "@/lib/auth/api-keys";
-import { isClerkEnabled } from "@/lib/auth/config";
+import {
+  isClerkEnabled,
+  isLocalFileDevMode,
+  LOCAL_DEV_USER_ID,
+} from "@/lib/auth/config";
 
 export const dynamic = "force-dynamic";
 
@@ -8,11 +12,14 @@ export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  if (!isClerkEnabled()) {
-    return Response.json({ ok: false, error: "clerk not configured" }, { status: 503 });
+  let userId: string | null = null;
+
+  if (isLocalFileDevMode()) {
+    userId = LOCAL_DEV_USER_ID;
+  } else if (isClerkEnabled()) {
+    userId = (await auth()).userId;
   }
 
-  const { userId } = await auth();
   if (!userId) {
     return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }

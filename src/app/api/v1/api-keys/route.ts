@@ -1,9 +1,22 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { createApiKey, listApiKeys } from "@/lib/auth/api-keys";
-import { isClerkEnabled } from "@/lib/auth/config";
+import {
+  isClerkEnabled,
+  isLocalFileDevMode,
+  LOCAL_DEV_USER_ID,
+} from "@/lib/auth/config";
 import { requireV1Access } from "@/lib/auth/require-access";
 
 export const dynamic = "force-dynamic";
+
+async function resolveApiKeyUserId(): Promise<string | null> {
+  if (isLocalFileDevMode()) return LOCAL_DEV_USER_ID;
+
+  if (!isClerkEnabled()) return null;
+
+  const { userId } = await auth();
+  return userId;
+}
 
 export async function GET(request: Request) {
   const access = await requireV1Access(request);
@@ -20,16 +33,12 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!isClerkEnabled()) {
+  const userId = await resolveApiKeyUserId();
+  if (!userId) {
     return Response.json(
       { ok: false, error: "clerk not configured" },
       { status: 503 },
     );
-  }
-
-  const { userId } = await auth();
-  if (!userId) {
-    return Response.json({ ok: false, error: "unauthorized" }, { status: 401 });
   }
 
   const body = (await request.json().catch(() => ({}))) as {
@@ -37,8 +46,11 @@ export async function POST(request: Request) {
     environment?: "live" | "test";
   };
 
-  const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress ?? null;
+  let email: string | null = null;
+  if (isClerkEnabled()) {
+    const user = await currentUser();
+    email = user?.emailAddresses[0]?.emailAddress ?? null;
+  }
 
   const { record, secret } = await createApiKey(userId, {
     label: body.label,
