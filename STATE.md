@@ -138,10 +138,12 @@ npm run dev
 
 - [x] `HOOKKIT_MAINTENANCE` — скрыть лендинг/docs на staging
 - [x] `GET /api/health` + `npm run smoke:staging`
-- [ ] Neon staging DB + `db:push` + `db:seed`
-- [ ] Clerk test app + env на Vercel
-- [ ] Vercel import + deploy (closed: `HOOKKIT_MAINTENANCE=1` или Password Protection)
-- [ ] Staging smoke на реальном URL
+- [x] Neon staging DB + `db:push` + `db:seed` (локально + Vercel env)
+- [x] Clerk test app + env на Vercel
+- [x] Vercel deploy — **https://hookkit-phi.vercel.app** (`HOOKKIT_MAINTENANCE=1`)
+- [x] Staging smoke на реальном URL (7/7)
+- [ ] GitHub ↔ Vercel auto-deploy (нужен Login Connection в Vercel)
+- [ ] Clerk → Domains: `hookkit-phi.vercel.app`
 - [ ] Termly embed на `/privacy`, `/terms`
 - [ ] File-store ownership hardening (prod multi-user)
 
@@ -179,7 +181,7 @@ npm test             # 59 tests
 
 ## Git
 
-- `main` @ CP-8 WIP — maintenance mode + smoke script
+- `main` @ `bb3691b` — CP-8 WIP + staging deploy https://hookkit-phi.vercel.app
 
 ## Google Tasks (OtomOsem TV's list)
 

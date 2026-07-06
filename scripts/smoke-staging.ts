@@ -13,6 +13,7 @@ function parseArgs(): string {
   const args = process.argv.slice(2);
   for (let i = 0; i < args.length; i += 1) {
     if (args[i] === "--url" && args[i + 1]) return args[i + 1].replace(/\/$/, "");
+    if (/^https?:\/\//i.test(args[i])) return args[i].replace(/\/$/, "");
   }
   return (
     process.env.SMOKE_BASE_URL ??
