@@ -23,19 +23,24 @@ function slugify(name: string): string {
   return `frm_${base || "form"}_${suffix}`;
 }
 
-async function listFileForms() {
+async function listFileForms(includeGuest: boolean) {
   const userForms = await listUserFormsFile();
+  const guest = includeGuest
+    ? [
+        {
+          id: "demo",
+          publicId: DEMO_FORM_SLUG,
+          name: "Demo (live)",
+          isGuest: true,
+          createdAt: null,
+        },
+      ]
+    : [];
   return Response.json({
     ok: true,
     storage: "file",
     forms: [
-      {
-        id: "demo",
-        publicId: DEMO_FORM_SLUG,
-        name: "Demo (live)",
-        isGuest: true,
-        createdAt: null,
-      },
+      ...guest,
       ...userForms.map((row) => ({
         id: row.id,
         publicId: row.publicId,
@@ -49,28 +54,32 @@ async function listFileForms() {
 
 export async function GET(request: Request) {
   if (!isDatabaseEnabled() && !isClerkEnabled()) {
-    return listFileForms();
+    return listFileForms(true);
   }
 
   const access = await requireV1Access(request);
   if (!access.ok) return access.response;
 
+  const includeGuest = access.via === "guest";
+
   if (!isDatabaseEnabled()) {
-    return listFileForms();
+    return listFileForms(includeGuest);
   }
 
   const db = getDb();
 
-  const guestRows = await db
-    .select({
-      id: forms.id,
-      publicId: forms.publicId,
-      name: forms.name,
-      isGuest: forms.isGuest,
-      createdAt: forms.createdAt,
-    })
-    .from(forms)
-    .where(or(eq(forms.publicId, DEMO_FORM_SLUG), eq(forms.isGuest, true)));
+  const guestRows = includeGuest
+    ? await db
+        .select({
+          id: forms.id,
+          publicId: forms.publicId,
+          name: forms.name,
+          isGuest: forms.isGuest,
+          createdAt: forms.createdAt,
+        })
+        .from(forms)
+        .where(or(eq(forms.publicId, DEMO_FORM_SLUG), eq(forms.isGuest, true)))
+    : [];
 
   const [dbUser] = await db
     .select({ id: users.id })

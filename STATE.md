@@ -218,4 +218,4 @@ npm test             # 59 tests
 - [x] Legal pages: Privacy, Terms, Cookies (static HTML, CP-8)
 - [x] Vercel staging deploy + smoke 7/7
 
-**Открыто (CP-9):** проверить legal live после deploy, `NEXT_PUBLIC_CONTACT_EMAIL`, снять maintenance, custom domain, file-store ownership (если без Neon).
+**Открыто (CP-9):** custom domain + URL в legal, file-store ownership (если без Neon).

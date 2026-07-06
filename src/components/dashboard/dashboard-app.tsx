@@ -78,11 +78,17 @@ export function DashboardApp({
   apiKeysEnabled?: boolean;
 }) {
   const [view, setView] = useState<DashboardView>("webhooks");
-  const [inboxList, setInboxList] = useState<Inbox[]>(DEFAULT_INBOXES);
-  const [formList, setFormList] = useState<FormItem[]>(DEFAULT_FORMS);
-  const [activeInboxId, setActiveInboxId] = useState(DEMO_INBOX_SLUG);
+  const [inboxList, setInboxList] = useState<Inbox[]>(() =>
+    clerkEnabled ? [] : DEFAULT_INBOXES,
+  );
+  const [formList, setFormList] = useState<FormItem[]>(() =>
+    clerkEnabled ? [] : DEFAULT_FORMS,
+  );
+  const [activeInboxId, setActiveInboxId] = useState(() =>
+    clerkEnabled ? "" : DEMO_INBOX_SLUG,
+  );
   const [selectedEventRecordId, setSelectedEventRecordId] = useState<string | null>(null);
-  const [activeFormId, setActiveFormId] = useState(DEMO_FORM_SLUG);
+  const [activeFormId, setActiveFormId] = useState(() => (clerkEnabled ? "" : DEMO_FORM_SLUG));
   const [embedTab, setEmbedTab] = useState<EmbedTab>("html");
   const [baseUrl] = useState(
     () =>
@@ -144,11 +150,15 @@ export function DashboardApp({
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null;
 
   const activeInbox =
-    inboxList.find((i) => i.id === activeInboxId) ?? inboxList[0] ?? DEFAULT_INBOXES[0];
+    inboxList.find((i) => i.id === activeInboxId) ??
+    inboxList[0] ??
+    (clerkEnabled ? undefined : DEFAULT_INBOXES[0]);
   const activeForm =
-    formList.find((f) => f.id === activeFormId) ?? formList[0] ?? DEFAULT_FORMS[0];
-  const activeInboxSlug = activeInbox.url;
-  const activeFormSlug = activeForm.endpoint;
+    formList.find((f) => f.id === activeFormId) ??
+    formList[0] ??
+    (clerkEnabled ? undefined : DEFAULT_FORMS[0]);
+  const activeInboxSlug = activeInbox?.url ?? "";
+  const activeFormSlug = activeForm?.endpoint ?? "";
   const formUrl = getFormUrl(activeFormSlug, baseUrl);
   const embedSnippets = getEmbedSnippets(
     formUrl,
@@ -320,13 +330,20 @@ export function DashboardApp({
       events: 0,
       active: !row.isGuest,
     }));
+    if (clerkEnabled) {
+      setInboxList(mapped);
+      setActiveInboxId((prev) =>
+        prev && mapped.some((inbox) => inbox.id === prev) ? prev : (mapped[0]?.id ?? ""),
+      );
+      return;
+    }
     setInboxList(mapped.length > 0 ? mapped : DEFAULT_INBOXES);
     if (mapped.length > 0) {
       setActiveInboxId((prev) =>
         mapped.some((inbox) => inbox.id === prev) ? prev : mapped[0].id,
       );
     }
-  }, []);
+  }, [clerkEnabled]);
 
   const refreshFormList = useCallback(async () => {
     const res = await fetch("/api/v1/forms");
@@ -341,13 +358,20 @@ export function DashboardApp({
       subs: 0,
       active: !row.isGuest,
     }));
+    if (clerkEnabled) {
+      setFormList(mapped);
+      setActiveFormId((prev) =>
+        prev && mapped.some((form) => form.id === prev) ? prev : (mapped[0]?.id ?? ""),
+      );
+      return;
+    }
     setFormList(mapped.length > 0 ? mapped : DEFAULT_FORMS);
     if (mapped.length > 0) {
       setActiveFormId((prev) =>
         mapped.some((form) => form.id === prev) ? prev : mapped[0].id,
       );
     }
-  }, []);
+  }, [clerkEnabled]);
 
   useEffect(() => {
     let cancelled = false;
@@ -374,29 +398,16 @@ export function DashboardApp({
   }, [refreshInboxList, refreshFormList]);
 
   useEffect(() => {
+    if (!activeFormSlug) {
+      setLiveSubmissions([]);
+      return;
+    }
+
     let cancelled = false;
 
     async function poll() {
-      const res = await fetch(`/api/forms/${activeFormSlug}/submissions?includeSpam=1`);
-      if (cancelled || !res.ok) return;
-      const data = (await res.json()) as {
-        submissions: Array<{
-          email: string;
-          message: string;
-          source: string;
-          spam: boolean;
-          time: string;
-        }>;
-      };
-      setLiveSubmissions(
-        data.submissions.map((s) => ({
-          time: s.time,
-          email: s.email,
-          message: s.message,
-          source: s.source,
-          spam: s.spam,
-        })),
-      );
+      if (cancelled) return;
+      await refreshLiveSubmissions(true);
     }
 
     void poll();
@@ -405,13 +416,19 @@ export function DashboardApp({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [activeFormSlug]);
+  }, [activeFormSlug, refreshLiveSubmissions]);
 
   const displayedSubmissions = liveSubmissions;
   const nonSpamCount = displayedSubmissions.filter((s) => !s.spam).length;
   const spamCount = displayedSubmissions.filter((s) => s.spam).length;
 
   useEffect(() => {
+    if (!activeInboxSlug) {
+      setLiveEvents([]);
+      setSelectedEventRecordId(null);
+      return;
+    }
+
     let cancelled = false;
 
     async function poll() {
@@ -436,6 +453,12 @@ export function DashboardApp({
   }, [activeInboxSlug]);
 
   useEffect(() => {
+    if (!activeInboxSlug) {
+      setReplayUrl("");
+      setReplayStats({ replaysThisWeek: 0, successRate: 100 });
+      return;
+    }
+
     let cancelled = false;
 
     async function loadReplayMeta() {
@@ -460,6 +483,8 @@ export function DashboardApp({
   }, [activeInboxSlug]);
 
   useEffect(() => {
+    if (!activeFormSlug) return;
+
     let cancelled = false;
 
     async function loadFormSettings() {
@@ -526,7 +551,7 @@ export function DashboardApp({
     displayedEvents[0] ??
     null;
 
-  const inboxUrl = getInboxUrl(activeInbox.url, baseUrl);
+  const inboxUrl = activeInbox ? getInboxUrl(activeInbox.url, baseUrl) : "";
 
   const jsonHtml = useMemo(
     () => (selectedEvent ? highlightJson(selectedEvent.payload) : ""),
@@ -867,7 +892,7 @@ export function DashboardApp({
             <header className="topbar">
               <div>
                 <div className="topbar-title">Webhook Inbox</div>
-                <div className="topbar-sub">{activeInbox.name}</div>
+                <div className="topbar-sub">{activeInbox?.name ?? "Create an inbox to get started"}</div>
               </div>
               <div className="topbar-actions">
                 <Link href="/docs" className="btn btn-ghost">
@@ -885,7 +910,7 @@ export function DashboardApp({
                   type="button"
                   className="btn btn-primary"
                   onClick={() => void sendTestWebhook()}
-                  disabled={sendingTest}
+                  disabled={sendingTest || !activeInbox}
                 >
                   {sendingTest ? "Sending…" : "Send test"}
                 </button>
@@ -1073,7 +1098,7 @@ export function DashboardApp({
             <header className="topbar">
               <div>
                 <div className="topbar-title">Form Backend</div>
-                <div className="topbar-sub">{activeForm.name}</div>
+                <div className="topbar-sub">{activeForm?.name ?? "Create a form to get started"}</div>
               </div>
               <div className="topbar-actions">
                 <button
@@ -1122,7 +1147,7 @@ export function DashboardApp({
                 <div className="stat-card">
                   <div className="stat-label">Endpoint</div>
                   <div className="stat-value" style={{ fontSize: 13, marginTop: 4 }}>
-                    /f/{activeForm.endpoint.slice(0, 12)}…
+                    /f/{activeForm?.endpoint.slice(0, 12) ?? "…"}…
                   </div>
                   <div className="stat-delta neutral">live</div>
                 </div>

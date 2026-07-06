@@ -23,20 +23,25 @@ function slugify(name: string): string {
   return `wh_${base || "inbox"}_${suffix}`;
 }
 
-async function listFileInboxes() {
+async function listFileInboxes(includeGuest: boolean) {
   const userInboxes = await listUserInboxesFile();
+  const guest = includeGuest
+    ? [
+        {
+          id: "demo",
+          publicId: DEMO_INBOX_SLUG,
+          name: "Demo (read-only)",
+          paused: false,
+          isGuest: true,
+          createdAt: null,
+        },
+      ]
+    : [];
   return Response.json({
     ok: true,
     storage: "file",
     inboxes: [
-      {
-        id: "demo",
-        publicId: DEMO_INBOX_SLUG,
-        name: "Demo (read-only)",
-        paused: false,
-        isGuest: true,
-        createdAt: null,
-      },
+      ...guest,
       ...userInboxes.map((row) => ({
         id: row.id,
         publicId: row.publicId,
@@ -51,22 +56,26 @@ async function listFileInboxes() {
 
 export async function GET(request: Request) {
   if (!isDatabaseEnabled() && !isClerkEnabled()) {
-    return listFileInboxes();
+    return listFileInboxes(true);
   }
 
   const access = await requireV1Access(request);
   if (!access.ok) return access.response;
 
+  const includeGuest = access.via === "guest";
+
   if (!isDatabaseEnabled()) {
-    return listFileInboxes();
+    return listFileInboxes(includeGuest);
   }
 
   const db = getDb();
 
-  const guestRows = await db
-    .select()
-    .from(inboxes)
-    .where(or(eq(inboxes.publicId, DEMO_INBOX_SLUG), eq(inboxes.isGuest, true)));
+  const guestRows = includeGuest
+    ? await db
+        .select()
+        .from(inboxes)
+        .where(or(eq(inboxes.publicId, DEMO_INBOX_SLUG), eq(inboxes.isGuest, true)))
+    : [];
 
   const [dbUser] = await db
     .select({ id: users.id })
