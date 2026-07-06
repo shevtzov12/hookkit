@@ -23,7 +23,7 @@ npm run dev
 
 ## Project status
 
-**Phase 3 (current):** Drizzle + Neon schema. Dual store (file / Postgres). Demo seed.
+**Phase 8 (staging live):** Neon + Clerk + Vercel, maintenance mode, legal pages. См. [`STATE.md`](./STATE.md).
 
 ## API (CP-1 + CP-2 + CP-3)
 
@@ -49,9 +49,7 @@ npm run db:push
 npm run db:seed
 ```
 
-**Roadmap & checkpoints:** see [`STATE.md`](./STATE.md) — читай в новых чатах вместо полного контекста.
-
-**Next up:** Form submit `/f/[id]`, Neon schema, auth, API keys.
+**Roadmap & checkpoints:** [`STATE.md`](./STATE.md)
 
 ## Scripts
 

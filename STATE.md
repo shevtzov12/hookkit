@@ -35,7 +35,7 @@ Webhook Inbox + Form Backend для статики. API-first, без AI.
 | `/api/v1/inboxes` | done | GET/POST inboxes (Neon + Clerk) |
 | `/api/inboxes/[id]/stats` | done | GET inbox stats + rate usage |
 | `/api/forms/[id]/usage` | done | GET form rate usage |
-| `/privacy`, `/terms` | done | Legal placeholders (Termly later) |
+| `/privacy`, `/terms`, `/cookies` | done | Legal (static HTML в `content/legal/`, опционально Termly embed) |
 
 ## Структура кода
 
@@ -134,7 +134,7 @@ npm run dev
 - Dashboard: live webhook stats, live rate limits panel, Docs link
 - `npm run bench:rate-limit` — load test script
 
-### CP-8 — Release prep (in progress)
+### CP-8 — Staging release ✅ (осталось prod-полировка)
 
 - [x] `HOOKKIT_MAINTENANCE` — скрыть лендинг/docs на staging
 - [x] `GET /api/health` + `npm run smoke:staging`
@@ -142,10 +142,24 @@ npm run dev
 - [x] Clerk test app + env на Vercel
 - [x] Vercel deploy — **https://hookkit-phi.vercel.app** (`HOOKKIT_MAINTENANCE=1`)
 - [x] Staging smoke на реальном URL (7/7)
-- [ ] GitHub ↔ Vercel auto-deploy (нужен Login Connection в Vercel)
-- [ ] Clerk → Domains: `hookkit-phi.vercel.app`
-- [ ] Termly embed на `/privacy`, `/terms`
-- [ ] File-store ownership hardening (prod multi-user)
+- [x] Legal: `/privacy`, `/terms`, `/cookies` — static HTML (`content/legal/`), `SiteFooter`, cookie notice
+- [x] Push legal на `main` (`3d8ae22`) → Vercel redeploy
+
+**Осталось (CP-9 / перед публичным prod):**
+
+- [ ] Проверить live после deploy: `/privacy`, `/terms`, `/cookies`, footer, cookie banner
+- [x] Contact footer → `shevtzov12@gmail.com` (fallback в коде; env опционален)
+- [ ] GitHub ↔ Vercel auto-deploy — убедиться, что push триггерит build (не только manual)
+- [ ] Clerk → Domains — **только для prod/custom domain**; dev `*.vercel.app` ок без этого
+- [ ] Снять `HOOKKIT_MAINTENANCE` когда staging можно показывать снаружи
+- [ ] File-store ownership hardening (если prod без Neon — не рекомендуется)
+- [ ] Custom domain + обновить URL в legal-файлах
+- [ ] (опц.) Подчистить Privacy Termly boilerplate: social logins, targeted ads в §5
+
+**Не нужно:**
+
+- ~~Termly paid embed (`data-id`)~~ — заменено static HTML + свой cookie notice
+- ~~Termly Cookie Policy export~~ — свой `cookie-policy.html` без `__________` и dev Clerk noise
 
 **Staging checklist (ручной):**
 
@@ -163,8 +177,8 @@ npm run db:seed
 # 4. После deploy — обновить NEXT_PUBLIC_APP_URL → Redeploy
 #    Clerk → Domains: добавить *.vercel.app
 
-# 5. Smoke
-npm run smoke:staging -- --url https://YOUR.vercel.app
+# 5. Smoke (после каждого deploy)
+npm run smoke:staging -- --url https://hookkit-phi.vercel.app
 ```
 
 ## Локальная разработка
@@ -181,7 +195,7 @@ npm test             # 59 tests
 
 ## Git
 
-- `main` @ `bb3691b` — CP-8 WIP + staging deploy https://hookkit-phi.vercel.app
+- `main` @ `3d8ae22` — legal pages + staging https://hookkit-phi.vercel.app
 
 ## Google Tasks (OtomOsem TV's list)
 
@@ -201,5 +215,7 @@ npm test             # 59 tests
 - [x] Export CSV, Resend, /docs, landing polish, Vercel config (CP-6)
 - [x] Usage API, live stats, bench script (CP-7)
 - [x] Dashboard live wiring + button fixes + local API keys UX
+- [x] Legal pages: Privacy, Terms, Cookies (static HTML, CP-8)
+- [x] Vercel staging deploy + smoke 7/7
 
-Открыто: Termly embed, Vercel deploy (manual), file-store ownership на production.
+**Открыто (CP-9):** проверить legal live после deploy, `NEXT_PUBLIC_CONTACT_EMAIL`, снять maintenance, custom domain, file-store ownership (если без Neon).

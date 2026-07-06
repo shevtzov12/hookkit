@@ -25,5 +25,5 @@ export function isTermlyTermsConfigured(): boolean {
 }
 
 export function getContactEmail(): string {
-  return process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "hello@hookkit.app";
+  return process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || "shevtzov12@gmail.com";
 }
