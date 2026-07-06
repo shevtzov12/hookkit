@@ -140,7 +140,7 @@ npm run dev
 - [x] `GET /api/health` + `npm run smoke:staging`
 - [x] Neon staging DB + `db:push` + `db:seed` (локально + Vercel env)
 - [x] Clerk test app + env на Vercel
-- [x] Vercel deploy — **https://hookkit-phi.vercel.app** (`HOOKKIT_MAINTENANCE=1`)
+- [x] Vercel deploy — **https://hookkit-phi.vercel.app** (публичный, maintenance снят 2026-07-06)
 - [x] Staging smoke на реальном URL (7/7)
 - [x] Legal: `/privacy`, `/terms`, `/cookies` — static HTML (`content/legal/`), `SiteFooter`, cookie notice
 - [x] Push legal на `main` (`3d8ae22`) → Vercel redeploy
@@ -151,7 +151,7 @@ npm run dev
 - [x] Contact footer → `shevtzov12@gmail.com` (fallback в коде; env опционален)
 - [ ] GitHub ↔ Vercel auto-deploy — убедиться, что push триггерит build (не только manual)
 - [ ] Clerk → Domains — **только для prod/custom domain**; dev `*.vercel.app` ок без этого
-- [ ] Снять `HOOKKIT_MAINTENANCE` когда staging можно показывать снаружи
+- [x] Снять `HOOKKIT_MAINTENANCE` — env удалён на Vercel (Production + Preview), redeploy 2026-07-06
 - [ ] File-store ownership hardening (если prod без Neon — не рекомендуется)
 - [ ] Custom domain + обновить URL в legal-файлах
 - [ ] (опц.) Подчистить Privacy Termly boilerplate: social logins, targeted ads в §5

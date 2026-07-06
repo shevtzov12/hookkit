@@ -23,7 +23,7 @@ npm run dev
 
 ## Project status
 
-**Phase 8 (staging live):** Neon + Clerk + Vercel, maintenance mode, legal pages. См. [`STATE.md`](./STATE.md).
+**Phase 8 (public):** Neon + Clerk + Vercel, legal pages, landing/docs открыты. См. [`STATE.md`](./STATE.md).
 
 ## API (CP-1 + CP-2 + CP-3)
 
