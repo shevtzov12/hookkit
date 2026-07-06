@@ -134,11 +134,36 @@ npm run dev
 - Dashboard: live webhook stats, live rate limits panel, Docs link
 - `npm run bench:rate-limit` — load test script
 
-### CP-8 — (next)
+### CP-8 — Release prep (in progress)
 
-Termly embed, Vercel deploy (manual), file-store multi-tenant ownership hardening.
+- [x] `HOOKKIT_MAINTENANCE` — скрыть лендинг/docs на staging
+- [x] `GET /api/health` + `npm run smoke:staging`
+- [ ] Neon staging DB + `db:push` + `db:seed`
+- [ ] Clerk test app + env на Vercel
+- [ ] Vercel import + deploy (closed: `HOOKKIT_MAINTENANCE=1` или Password Protection)
+- [ ] Staging smoke на реальном URL
+- [ ] Termly embed на `/privacy`, `/terms`
+- [ ] File-store ownership hardening (prod multi-user)
 
-Dashboard live wiring (create inbox/form, settings view, webhook toggle) — done locally.
+**Staging checklist (ручной):**
+
+```bash
+# 1. Neon — создать hookkit-staging, скопировать DATABASE_URL
+npm run db:push
+npm run db:seed
+
+# 2. Clerk — test app, keys в Vercel env
+
+# 3. Vercel — import main, env:
+#    DATABASE_URL, CLERK_*, NEXT_PUBLIC_APP_URL, UPSTASH_*, TURNSTILE_*
+#    HOOKKIT_MAINTENANCE=1  (закрытый staging)
+
+# 4. После deploy — обновить NEXT_PUBLIC_APP_URL → Redeploy
+#    Clerk → Domains: добавить *.vercel.app
+
+# 5. Smoke
+npm run smoke:staging -- --url https://YOUR.vercel.app
+```
 
 ## Локальная разработка
 
@@ -154,20 +179,7 @@ npm test             # 59 tests
 
 ## Git
 
-- `main` @ `a17d703` — CP-5…7 merged (PR #1)
-- Preview/prod: Vercel — подключить репо + env (см. ниже)
-
-### Vercel deploy (ручной шаг)
-
-1. [Import hookkit](https://vercel.com/new/import?s=https://github.com/shevtzov12/hookkit) → Framework Next.js, region fra1
-2. **Production env** (минимум для полного SaaS):
-   - `DATABASE_URL` — Neon
-   - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`
-   - `NEXT_PUBLIC_APP_URL` — `https://your-domain.vercel.app`
-3. **Optional:** `UPSTASH_REDIS_*`, `RESEND_*`, `TURNSTILE_*`
-4. Deploy → `npm run db:push` + `npm run db:seed` против Neon prod (один раз)
-
-> Без Neon+Clerk на Vercel file-store **не персистится** между invocations — только для preview smoke с ограничениями.
+- `main` @ CP-8 WIP — maintenance mode + smoke script
 
 ## Google Tasks (OtomOsem TV's list)
 

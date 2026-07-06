@@ -13,9 +13,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed.ts",
-    "bench:rate-limit": "tsx scripts/bench-rate-limit.ts"
+    "db:push": "node --env-file=.env.local ./node_modules/drizzle-kit/bin.cjs push",
+    "db:seed": "node --env-file=.env.local ./node_modules/tsx/dist/cli.mjs scripts/seed.ts",
+    "bench:rate-limit": "tsx scripts/bench-rate-limit.ts",
+    "smoke:staging": "tsx scripts/smoke-staging.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.10",

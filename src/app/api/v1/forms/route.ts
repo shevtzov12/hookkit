@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { isClerkEnabled } from "@/lib/auth/config";
 import { requireV1Access } from "@/lib/auth/require-access";
 import { getDb, isDatabaseEnabled } from "@/lib/db/client";
@@ -60,17 +60,8 @@ export async function GET(request: Request) {
   }
 
   const db = getDb();
-  const [dbUser] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.clerkId, access.userId!))
-    .limit(1);
 
-  if (!dbUser) {
-    return Response.json({ ok: true, storage: "neon", forms: [] });
-  }
-
-  const rows = await db
+  const guestRows = await db
     .select({
       id: forms.id,
       publicId: forms.publicId,
@@ -79,12 +70,33 @@ export async function GET(request: Request) {
       createdAt: forms.createdAt,
     })
     .from(forms)
-    .where(eq(forms.userId, dbUser.id));
+    .where(or(eq(forms.publicId, DEMO_FORM_SLUG), eq(forms.isGuest, true)));
+
+  const [dbUser] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.clerkId, access.userId!))
+    .limit(1);
+
+  const userRows = dbUser
+    ? await db
+        .select({
+          id: forms.id,
+          publicId: forms.publicId,
+          name: forms.name,
+          isGuest: forms.isGuest,
+          createdAt: forms.createdAt,
+        })
+        .from(forms)
+        .where(eq(forms.userId, dbUser.id))
+    : [];
+
+  const merged = [...guestRows, ...userRows.filter((row) => !row.isGuest)];
 
   return Response.json({
     ok: true,
     storage: "neon",
-    forms: rows.map((row) => ({
+    forms: merged.map((row) => ({
       id: row.id,
       publicId: row.publicId,
       name: row.name,

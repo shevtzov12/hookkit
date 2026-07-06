@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { isClerkEnabled } from "@/lib/auth/config";
 import { requireV1Access } from "@/lib/auth/require-access";
 import { getDb, isDatabaseEnabled } from "@/lib/db/client";
@@ -62,22 +62,28 @@ export async function GET(request: Request) {
   }
 
   const db = getDb();
+
+  const guestRows = await db
+    .select()
+    .from(inboxes)
+    .where(or(eq(inboxes.publicId, DEMO_INBOX_SLUG), eq(inboxes.isGuest, true)));
+
   const [dbUser] = await db
     .select({ id: users.id })
     .from(users)
     .where(eq(users.clerkId, access.userId!))
     .limit(1);
 
-  if (!dbUser) {
-    return Response.json({ ok: true, inboxes: [] });
-  }
+  const userRows = dbUser
+    ? await db.select().from(inboxes).where(eq(inboxes.userId, dbUser.id))
+    : [];
 
-  const rows = await db.select().from(inboxes).where(eq(inboxes.userId, dbUser.id));
+  const merged = [...guestRows, ...userRows.filter((row) => !row.isGuest)];
 
   return Response.json({
     ok: true,
     storage: "neon",
-    inboxes: rows.map((row) => ({
+    inboxes: merged.map((row) => ({
       id: row.id,
       publicId: row.publicId,
       name: row.name,

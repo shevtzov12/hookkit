@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClerkAuthNav } from "@/components/clerk-auth-nav";
 
 export default function HomePage() {
   return (
@@ -19,9 +20,7 @@ export default function HomePage() {
           sites — API-first, with keys, rate limits, and Turnstile spam protection.
         </p>
         <div className="landing-actions">
-          <Link href="/dashboard" className="landing-btn landing-btn-primary">
-            Open dashboard
-          </Link>
+          <ClerkAuthNav />
           <Link href="/docs" className="landing-btn landing-btn-ghost">
             API docs
           </Link>

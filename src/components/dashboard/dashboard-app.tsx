@@ -143,8 +143,10 @@ export function DashboardApp({
   });
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? null;
 
-  const activeInbox = inboxList.find((i) => i.id === activeInboxId) ?? inboxList[0];
-  const activeForm = formList.find((f) => f.id === activeFormId) ?? formList[0];
+  const activeInbox =
+    inboxList.find((i) => i.id === activeInboxId) ?? inboxList[0] ?? DEFAULT_INBOXES[0];
+  const activeForm =
+    formList.find((f) => f.id === activeFormId) ?? formList[0] ?? DEFAULT_FORMS[0];
   const activeInboxSlug = activeInbox.url;
   const activeFormSlug = activeForm.endpoint;
   const formUrl = getFormUrl(activeFormSlug, baseUrl);
@@ -311,15 +313,19 @@ export function DashboardApp({
     const data = (await res.json()) as {
       inboxes: Array<{ id: string; publicId: string; name: string; isGuest: boolean }>;
     };
-    setInboxList(
-      data.inboxes.map((row) => ({
-        id: row.publicId,
-        name: row.name,
-        url: row.publicId,
-        events: 0,
-        active: !row.isGuest,
-      })),
-    );
+    const mapped = data.inboxes.map((row) => ({
+      id: row.publicId,
+      name: row.name,
+      url: row.publicId,
+      events: 0,
+      active: !row.isGuest,
+    }));
+    setInboxList(mapped.length > 0 ? mapped : DEFAULT_INBOXES);
+    if (mapped.length > 0) {
+      setActiveInboxId((prev) =>
+        mapped.some((inbox) => inbox.id === prev) ? prev : mapped[0].id,
+      );
+    }
   }, []);
 
   const refreshFormList = useCallback(async () => {
@@ -328,15 +334,19 @@ export function DashboardApp({
     const data = (await res.json()) as {
       forms: Array<{ id: string; publicId: string; name: string; isGuest: boolean }>;
     };
-    setFormList(
-      data.forms.map((row) => ({
-        id: row.publicId,
-        name: row.name,
-        endpoint: row.publicId,
-        subs: 0,
-        active: !row.isGuest,
-      })),
-    );
+    const mapped = data.forms.map((row) => ({
+      id: row.publicId,
+      name: row.name,
+      endpoint: row.publicId,
+      subs: 0,
+      active: !row.isGuest,
+    }));
+    setFormList(mapped.length > 0 ? mapped : DEFAULT_FORMS);
+    if (mapped.length > 0) {
+      setActiveFormId((prev) =>
+        mapped.some((form) => form.id === prev) ? prev : mapped[0].id,
+      );
+    }
   }, []);
 
   useEffect(() => {
