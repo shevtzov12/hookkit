@@ -1,7 +1,10 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+import { CookieNotice } from "@/components/legal/cookie-notice";
+import { TermlyCMP } from "@/components/legal/termly-cmp";
 import { isClerkEnabled } from "@/lib/auth/config";
+import { getTermlyWebsiteUuid } from "@/lib/termly/config";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -26,8 +29,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const useTermlyCmp = Boolean(getTermlyWebsiteUuid());
+
   const body = (
-    <body className="h-full antialiased">{children}</body>
+    <body className="h-full antialiased">
+      <TermlyCMP />
+      {!useTermlyCmp ? <CookieNotice /> : null}
+      {children}
+    </body>
   );
 
   return (

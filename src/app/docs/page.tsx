@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteFooter } from "@/components/legal/site-footer";
 
 const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -66,6 +67,8 @@ GET  /api/v1/forms
 GET  /api/v1/api-keys
 POST /api/v1/inboxes`}</pre>
         </section>
+
+        <SiteFooter />
       </main>
     </div>
   );

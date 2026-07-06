@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ClerkAuthNav } from "@/components/clerk-auth-nav";
+import { SiteFooter } from "@/components/legal/site-footer";
 
 export default function HomePage() {
   return (
@@ -31,12 +32,7 @@ export default function HomePage() {
           <li>API keys, Clerk auth, Upstash rate limits</li>
           <li>Email notifications via Resend (optional)</li>
         </ul>
-        <footer className="landing-footer">
-          <Link href="/docs">Docs</Link>
-          <Link href="/privacy">Privacy</Link>
-          <Link href="/terms">Terms</Link>
-          <span>HookKit · static-first backend</span>
-        </footer>
+        <SiteFooter />
       </main>
     </div>
   );

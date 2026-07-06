@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteFooter } from "@/components/legal/site-footer";
 
 export default function MaintenancePage() {
   return (
@@ -22,6 +23,7 @@ export default function MaintenancePage() {
             Sign in
           </Link>
         </div>
+        <SiteFooter />
       </main>
     </div>
   );
